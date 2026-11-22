@@ -16,15 +16,22 @@ export async function POST(req: NextRequest) {
     if (apiKey) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash",
-          systemInstruction: `You are an academic curriculum designer. Given a lecture transcript, generate a structured revision guide containing:
+        const candidateModels = [
+          "gemini-1.5-flash-latest",
+          "gemini-1.5-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash-001",
+          "gemini-1.5-flash-002",
+          "gemini-1.5-pro-latest",
+          "gemini-pro"
+        ];
+
+        const systemInstruction = `You are an academic curriculum designer. Given a lecture transcript, generate a structured revision guide containing:
 1. Executive Summary (1 paragraph)
 2. Core Principles (3-4 bullet points)
 3. Key Definitions with exact [MM:SS] timestamps
 4. Quick Quiz with questions and answers with timestamps.
-Output valid JSON only with keys: executiveSummary, corePrinciples, keyDefinitions, quickQuiz.`,
-        });
+Output valid JSON only with keys: executiveSummary, corePrinciples, keyDefinitions, quickQuiz.`;
 
         const prompt = `LECTURE: ${activeLecture.title} by ${activeLecture.channel}
 TRANSCRIPT:
@@ -32,8 +39,24 @@ ${activeLecture.transcriptSegments.map(s => `[${s.start}s] ${s.text}`).join("\n"
 
 Generate the revision guide JSON.`;
 
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text();
+        let rawText = "";
+        for (const modelName of candidateModels) {
+          try {
+            const model = genAI.getGenerativeModel({
+              model: modelName,
+              systemInstruction,
+            });
+            const result = await model.generateContent(prompt);
+            rawText = result.response.text();
+            if (rawText) break;
+          } catch (mErr: any) {
+            if (mErr?.message?.includes("404") || mErr?.message?.includes("not found")) {
+              continue;
+            }
+            throw mErr;
+          }
+        }
+
         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);

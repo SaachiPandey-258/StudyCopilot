@@ -22,22 +22,10 @@ export async function POST(req: NextRequest) {
              question.toLowerCase().includes(b.question.toLowerCase().substring(0, 25))
     );
 
-    // If an API key is provided, execute a real live Gemini 1.5 Flash call
+    // If an API key is provided, execute a real live Gemini call with model fallback
     if (apiKey) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash",
-          systemInstruction: `You are YouTube StudyCopilot, an AI lecture intelligence assistant built for high-intent academic and technical learners.
-Your primary directive is STRICT GROUNDING on the provided video lecture transcript.
-
-RULES:
-1. Every factual statement must cite the exact moment from the video using a bracketed timestamp: [MM:SS].
-2. ZERO TOLERANCE FOR HALLUCINATION: If the user asks about ANY topic, person, or technical concept that is NOT explicitly taught or mentioned in the provided lecture, you MUST NOT answer from external general knowledge.
-3. If the topic is out-of-scope or missing, start your response with: "⚠️ Not covered in this video." followed by a single sentence summarizing what this lecture actually focuses on.
-4. Keep explanations concise, clear, and high-yield for exam or technical revision.`,
-        });
-
         const activeLecture = PRESET_LECTURES.find((p) => p.id === lectureId) || PRESET_LECTURES[0];
         const contextTranscript = transcriptOverride || activeLecture.transcriptSegments
           .map((s) => `[${formatSeconds(s.start)}] ${s.text}`)
@@ -53,8 +41,55 @@ ${question}
 
 Provide your grounded response following the strict system instructions. Include [MM:SS] timestamps.`;
 
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const systemInstruction = `You are YouTube StudyCopilot, an AI lecture intelligence assistant built for high-intent academic and technical learners.
+Your primary directive is STRICT GROUNDING on the provided video lecture transcript.
+
+RULES:
+1. Every factual statement must cite the exact moment from the video using a bracketed timestamp: [MM:SS].
+2. ZERO TOLERANCE FOR HALLUCINATION: If the user asks about ANY topic, person, or technical concept that is NOT explicitly taught or mentioned in the provided lecture, you MUST NOT answer from external general knowledge.
+3. If the topic is out-of-scope or missing, start your response with: "⚠️ Not covered in this video." followed by a single sentence summarizing what this lecture actually focuses on.
+4. Keep explanations concise, clear, and high-yield for exam or technical revision.`;
+
+        // Try model candidates in order in case of regional/version deprecation
+        const candidateModels = [
+          "gemini-1.5-flash-latest",
+          "gemini-1.5-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash-001",
+          "gemini-1.5-flash-002",
+          "gemini-1.5-pro-latest",
+          "gemini-pro"
+        ];
+
+        let text = "";
+        let successfulModel = candidateModels[0];
+        let lastError: any = null;
+
+        for (const modelName of candidateModels) {
+          try {
+            const model = genAI.getGenerativeModel({
+              model: modelName,
+              systemInstruction,
+            });
+            const result = await model.generateContent(prompt);
+            text = result.response.text();
+            successfulModel = modelName;
+            lastError = null;
+            break;
+          } catch (modelErr: any) {
+            lastError = modelErr;
+            // If 404 Not Found, continue to next model candidate
+            if (modelErr?.message?.includes("404") || modelErr?.message?.includes("not found")) {
+              continue;
+            }
+            // If authentication/key error, break early
+            throw modelErr;
+          }
+        }
+
+        if (!text && lastError) {
+          throw lastError;
+        }
 
         // Extract timestamps and coverage status
         const isCovered = !text.toLowerCase().includes("not covered in this video");
@@ -73,7 +108,7 @@ Provide your grounded response following the strict system instructions. Include
           answer: text,
           isCovered,
           source: "live_gemini",
-          model: "gemini-1.5-flash",
+          model: successfulModel,
           timestamps,
           latencyMs: 1250,
           verifiedTimestamp: timestamps[0]?.time || (isCovered ? "00:00" : null)
