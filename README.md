@@ -106,7 +106,7 @@ To quantitatively prove the system's quality, we established a standardized 20-q
 ### Quickstart
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/saachipandey/youtube-study-copilot.git
+   git clone https://github.com/SaachiPandey-258/youtube-study-copilot.git
    cd youtube-study-copilot
    ```
 
