@@ -106,8 +106,8 @@ To quantitatively prove the system's quality, we established a standardized 20-q
 ### Quickstart
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/SaachiPandey-258/youtube-study-copilot.git
-   cd youtube-study-copilot
+   git clone https://github.com/SaachiPandey-258/StudyCopilot.git
+   cd StudyCopilot
    ```
 
 2. **Install dependencies:**

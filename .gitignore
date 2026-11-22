@@ -33,6 +33,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# other projects
+certinal-consentflow/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
