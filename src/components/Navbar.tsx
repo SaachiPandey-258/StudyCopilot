@@ -104,12 +104,12 @@ export function Navbar({ activeTab, setActiveTab, apiKey, onOpenKeyModal }: Navb
           </button>
 
           <a
-            href="https://ai.google.dev/"
+            href="https://github.com/SaachiPandey-258/StudyCopilot"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1 text-[11px] text-neutral-400 hover:text-white"
           >
-            Powered by Gemini
+            GitHub Repo
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
