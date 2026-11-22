@@ -122,7 +122,7 @@ export function YouTubePlayer({ activeLecture, onSelectLecture, playerRef }: You
       <div className="relative aspect-video w-full bg-black">
         <iframe
           ref={iframeRef}
-          src={`https://www.youtube-nocookie.com/embed/${activeLecture.id}?enablejsapi=1&origin=${typeof window !== "undefined" ? window.location.origin : ""}&rel=0`}
+          src={`https://www.youtube.com/embed/${activeLecture.id}?enablejsapi=1&rel=0`}
           title={activeLecture.title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen

@@ -147,42 +147,57 @@ export function GroundedChat({ activeLecture, apiKey, onSeek, onOpenKeyModal }: 
           </div>
         )}
 
-        {/* Clickable Action Badges & Grounding Status */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-800/80 text-[10px]">
-          {msg.isCovered !== undefined && (
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-medium border ${
-                msg.isCovered
-                  ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/60"
-                  : "bg-amber-950/50 text-amber-300 border-amber-800/60"
-              }`}
+        {/* Error Callout */}
+        {msg.source === "error" && (
+          <div className="p-2.5 rounded bg-red-950/40 border border-red-800/60 text-xs text-red-300 space-y-2">
+            <p>{msg.text}</p>
+            <button
+              onClick={onOpenKeyModal}
+              className="text-[11px] font-semibold text-white bg-red-800/60 hover:bg-red-700 px-2.5 py-1 rounded transition-colors"
             >
-              {msg.isCovered ? (
-                <>
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  Verified in Video Evidence
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="w-3 h-3 text-amber-400" />
-                  Negative Grounding: Not in Lecture
-                </>
-              )}
-            </span>
-          )}
+              Configure / Reset API Key to Demo Mode
+            </button>
+          </div>
+        )}
 
-          {msg.model && (
-            <span className="text-neutral-400 font-mono bg-neutral-800/80 px-1.5 py-0.5 rounded border border-neutral-700/60">
-              {msg.model}
-            </span>
-          )}
+        {/* Clickable Action Badges & Grounding Status (Only for non-errors) */}
+        {msg.source !== "error" && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-800/80 text-[10px]">
+            {msg.isCovered !== undefined && (
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-medium border ${
+                  msg.isCovered
+                    ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/60"
+                    : "bg-amber-950/50 text-amber-300 border-amber-800/60"
+                }`}
+              >
+                {msg.isCovered ? (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    Verified in Video Evidence
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-3 h-3 text-amber-400" />
+                    Negative Grounding: Not in Lecture
+                  </>
+                )}
+              </span>
+            )}
 
-          {msg.source === "cached_gemini_example" && (
-            <span className="text-neutral-400 italic">
-              (Cached Example)
-            </span>
-          )}
-        </div>
+            {msg.model && (
+              <span className="text-neutral-400 font-mono bg-neutral-800/80 px-1.5 py-0.5 rounded border border-neutral-700/60">
+                {msg.model}
+              </span>
+            )}
+
+            {msg.source === "cached_gemini_example" && (
+              <span className="text-neutral-400 italic">
+                (Cached Example)
+              </span>
+            )}
+          </div>
+        )}
 
         {msg.note && (
           <p className="text-[10px] text-neutral-400 bg-neutral-900/60 p-1.5 rounded border border-neutral-800">
